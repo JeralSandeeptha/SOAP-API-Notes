@@ -13,6 +13,7 @@
 - [Pros and Cons](#pros-and-cons)
 - [Request and Response](#request-and-response)
 - [Summary](#summary)
+- [Create SOAP API](#create-soap-api)
 
 <br/><br/>
 
@@ -98,6 +99,96 @@
 
 - 💡 WSDL allows clients to auto-generate code (stubs) to consume services
 
+- WSDL is an XML document that describes how a SOAP web service works. 
+- It defines:
+    - The operations available (like createPost)
+    - The messages used in each operation
+    - How messages are bound to a protocol (SOAP/HTTP)
+    - Where the service is located (endpoint URL)
+
+### 🧩 1. Messages — What data is exchanged
+- Defines the input and output structure for operations
+```xml
+<message name="createPostRequest">
+  <part name="title" type="xsd:string"/>
+  <part name="content" type="xsd:string"/>
+  <part name="userId" type="xsd:string"/>
+</message>
+
+<message name="createPostResponse">
+  <part name="postId" type="xsd:string"/>
+</message>
+```
+
+- `createPostRequest`: takes `title`, `content`, `userId`
+- `createPostResponse`: returns the newly created `postId`
+
+These are like parameters for your function and return values
+
+### 🧠 2. Port Type — The contract (methods)
+- Defines the available operations in the service
+```xml
+<portType name="PostPortType">
+  <operation name="createPost">
+    <input message="tns:createPostRequest"/>
+    <output message="tns:createPostResponse"/>
+  </operation>
+</portType>
+```
+- This says: there's an operation `createPost` that expects the `createPostRequest` message and returns a `createPostResponse`.
+- This is like an interface in programming: what the service can do.
+
+### 🧷 3. Binding — How the methods are called
+- Defines how to map the operations to SOAP (or another protocol like HTTP)
+```xml
+<binding name="PostBinding" type="tns:PostPortType">
+  <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+  <operation name="createPost">
+    <soap:operation soapAction="createPost"/>
+    <input><soap:body use="literal"/></input>
+    <output><soap:body use="literal"/></output>
+  </operation>
+</binding>
+```
+- Binds PostPortType operations to SOAP over HTTP.
+- style="document" means it's a full XML document (not just parameters).
+- soapAction="createPost" is used by some SOAP clients to identify the method.
+- This is like defining how your function can be called over the network.
+
+### 📍 4. Service — Where the service is
+- Defines the endpoint URL and which binding to use
+```xml
+<service name="PostService">
+  <port name="PostPortType" binding="tns:PostBinding">
+    <soap:address location="http://localhost:3000/soap/post"/>
+  </port>
+</service>
+```
+- Tells the client: go to this URL to use PostPortType via PostBinding
+- This is like registering your service with a known address
+
+### 🔄 Request Flow Summary
+1. 🧑‍💻 Client reads WSDL:
+    - Sees the operation createPost, its inputs/outputs.
+    - Prepares a SOAP XML matching the createPostRequest.
+2. 🌐 Client sends `POST` to `http://localhost:3000/soap/post`  
+3. 🧠 Server:
+    - Matches the request with the WSDL-defined createPost operation.
+    - Extracts title, content, userId from the XML.
+    - Calls your Node.js service function createPost({ title, content, userId }).
+4. 📨 Response:
+    - Server wraps the result (postId) in a SOAP response.
+    - Sends it back according to createPostResponse structure. 
+
+### 📌 Visual Map
+```cmd
+WSDL
+├── messages (input/output structure)
+├── portType (defines methods)
+├── binding (how methods are mapped to SOAP)
+└── service (where it's available)
+```
+
 <br/><br/>
 
 ## Features
@@ -171,5 +262,10 @@
 | WS-\* standards | Set of extensions (security, reliability) |
 | Used in         | Banking, telecom, enterprise apps         |
 | Tools           | SoapUI, Postman, wsimport, JAX-WS, etc.   |
+
+<br/><br/>
+
+## Create SOAP API
+- Visit [this]() repo and access the source code and read how we can create a SOAP API
 
 <br/><br/>
